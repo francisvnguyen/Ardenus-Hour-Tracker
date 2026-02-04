@@ -14,7 +14,7 @@ import {
 } from "@/components/time-tracker/TimeEntryFilters";
 
 export default function Home() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -268,6 +268,7 @@ export default function Home() {
                 categories={categories}
                 onAddCategory={handleAddCategory}
                 onDeleteCategory={handleDeleteCategory}
+                isAdmin={session?.user?.role === 'admin'}
               />
             </motion.div>
 

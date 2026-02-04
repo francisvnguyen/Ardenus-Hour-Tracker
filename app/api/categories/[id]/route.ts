@@ -11,6 +11,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Only admins can delete categories
+  if (session.user.role !== 'admin') {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+  }
+
   const { id } = await params;
 
   const category = categoryQueries.findById.get(id);

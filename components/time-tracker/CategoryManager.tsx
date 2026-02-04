@@ -12,6 +12,7 @@ interface CategoryManagerProps {
   categories: Category[];
   onAddCategory: (category: Category) => void;
   onDeleteCategory: (id: string) => void;
+  isAdmin?: boolean;
 }
 
 const PRESET_COLORS = [
@@ -26,6 +27,7 @@ export function CategoryManager({
   categories,
   onAddCategory,
   onDeleteCategory,
+  isAdmin = false,
 }: CategoryManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -48,7 +50,7 @@ export function CategoryManager({
     <Card hover={false}>
       <CardHeader className="flex flex-row items-center justify-between">
         <h2 className="text-heading-3 font-heading">Categories</h2>
-        {!isAdding && (
+        {isAdmin && !isAdding && (
           <Button variant="secondary" size="sm" onClick={() => setIsAdding(true)}>
             Add
           </Button>
@@ -121,28 +123,30 @@ export function CategoryManager({
                   style={{ backgroundColor: category.color }}
                 />
                 <span className="flex-1">{category.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteCategory(category.id)}
-                  aria-label={`Delete category ${category.name}`}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteCategory(category.id)}
+                    aria-label={`Delete category ${category.name}`}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </Button>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </Button>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>
