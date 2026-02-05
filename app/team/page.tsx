@@ -68,6 +68,7 @@ export default function TeamPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
   const fetchActiveTimers = useCallback(async () => {
@@ -77,8 +78,8 @@ export default function TeamPage() {
         const data = await res.json();
         setActiveTimers(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch active timers:", error);
+    } catch {
+      setError("Failed to load active timers");
     }
   }, []);
 
@@ -89,8 +90,8 @@ export default function TeamPage() {
         const data = await res.json();
         setEntries(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch entries:", error);
+    } catch {
+      setError("Failed to load team entries");
     }
   }, []);
 
@@ -101,8 +102,8 @@ export default function TeamPage() {
         const data = await res.json();
         setCategories(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
+    } catch {
+      setError("Failed to load categories");
     }
   }, []);
 
@@ -113,8 +114,8 @@ export default function TeamPage() {
         const data = await res.json();
         setUsers(data.map((u: { id: string; name: string }) => ({ id: u.id, name: u.name })));
       }
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
+    } catch {
+      setError("Failed to load users");
     }
   }, []);
 
@@ -125,8 +126,8 @@ export default function TeamPage() {
         const data = await res.json();
         setRooms(data);
       }
-    } catch (error) {
-      console.error("Failed to fetch rooms:", error);
+    } catch {
+      setError("Failed to load rooms");
     }
   }, []);
 
@@ -138,8 +139,8 @@ export default function TeamPage() {
         await fetchRooms();
         return data.meetLink || null;
       }
-    } catch (error) {
-      console.error("Failed to join room:", error);
+    } catch {
+      setError("Failed to join room");
     }
     return null;
   }, [fetchRooms]);
@@ -150,8 +151,8 @@ export default function TeamPage() {
       if (res.ok) {
         await fetchRooms();
       }
-    } catch (error) {
-      console.error("Failed to leave room:", error);
+    } catch {
+      setError("Failed to leave room");
     }
   }, [fetchRooms]);
 
@@ -165,8 +166,8 @@ export default function TeamPage() {
       if (res.ok) {
         await fetchRooms();
       }
-    } catch (error) {
-      console.error("Failed to create room:", error);
+    } catch {
+      setError("Failed to create room");
     }
   }, [fetchRooms]);
 
@@ -180,8 +181,8 @@ export default function TeamPage() {
       if (res.ok) {
         await fetchRooms();
       }
-    } catch (error) {
-      console.error("Failed to edit room:", error);
+    } catch {
+      setError("Failed to update room");
     }
   }, [fetchRooms]);
 
@@ -195,8 +196,8 @@ export default function TeamPage() {
       if (res.ok) {
         await fetchRooms();
       }
-    } catch (error) {
-      console.error("Failed to delete room:", error);
+    } catch {
+      setError("Failed to delete room");
     }
   }, [fetchRooms]);
 
@@ -221,21 +222,22 @@ export default function TeamPage() {
     }
   }, [status, fetchActiveTimers, fetchEntries, fetchCategories, fetchUsers, fetchRooms]);
 
-  // Update elapsed time locally every second for active timers
+  // Update elapsed time locally every second by deriving from startTime
+  const [, setTick] = useState(0);
   useEffect(() => {
     if (activeTimers.length === 0) return;
 
     const interval = setInterval(() => {
-      setActiveTimers((prev) =>
-        prev.map((timer) => ({
-          ...timer,
-          elapsedSeconds: timer.elapsedSeconds + 1,
-        }))
-      );
+      setTick((t) => t + 1);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [activeTimers.length]);
+
+  const getElapsed = (timer: ActiveTimer) => {
+    const start = new Date(timer.startTime).getTime();
+    return Math.floor((Date.now() - start) / 1000);
+  };
 
   // Filter entries based on current filters
   const filteredEntries = useMemo(() => {
@@ -273,7 +275,7 @@ export default function TeamPage() {
   }
 
   return (
-    <main className="min-h-screen container-margins section-py-lg">
+    <main id="main-content" className="min-h-screen container-margins section-py-lg">
       <div className="max-w-[1200px] mx-auto">
         {/* Header */}
         <motion.header
@@ -290,6 +292,26 @@ export default function TeamPage() {
             Back to Tracker
           </Button>
         </motion.header>
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            role="alert"
+            className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 flex items-center justify-between"
+          >
+            {error}
+            <button
+              onClick={() => setError("")}
+              className="text-red-400 hover:text-red-300 min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Dismiss error"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
 
         {/* Who's Clocked In */}
         <motion.div
@@ -346,7 +368,7 @@ export default function TeamPage() {
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-heading tabular-nums text-lg">
-                            {formatTime(timer.elapsedSeconds)}
+                            {formatTime(getElapsed(timer))}
                           </p>
                         </div>
                       </div>

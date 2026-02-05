@@ -76,6 +76,7 @@ export function TimeEntryFilters({
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -90,6 +91,7 @@ export function TimeEntryFilters({
             value={filters.search}
             onChange={(e) => updateFilter("search", e.target.value)}
             className="pl-10"
+            aria-label="Search entries"
           />
         </div>
         <Button
@@ -104,6 +106,7 @@ export function TimeEntryFilters({
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"

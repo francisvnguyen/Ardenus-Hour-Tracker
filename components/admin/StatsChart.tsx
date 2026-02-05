@@ -168,9 +168,9 @@ export default function StatsChart({ users }: StatsChartProps) {
         </div>
 
         {/* Chart */}
-        <div className="h-[350px]">
+        <div className="h-[350px]" role="img" aria-label="Team hours chart showing time tracked per user over the selected date range">
           {isLoading ? (
-            <div className="h-full flex items-center justify-center">
+            <div className="h-full flex items-center justify-center" role="status">
               <p className="text-white/50 text-sm">Loading chart...</p>
             </div>
           ) : data.days.length === 0 ? (

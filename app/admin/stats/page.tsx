@@ -31,11 +31,18 @@ interface UserStats {
 }
 
 export default function AdminStatsPage() {
-  useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<UserStats[]>([]);
   const [period, setPeriod] = useState("week");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (session && session.user?.role !== "admin") {
+      router.push("/");
+    }
+  }, [session, router]);
 
   const fetchStats = useCallback(async (p: string) => {
     try {
@@ -45,7 +52,7 @@ export default function AdminStatsPage() {
         setStats(data);
       }
     } catch {
-      // silently fail
+      setError("Failed to load statistics");
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +83,7 @@ export default function AdminStatsPage() {
   }
 
   return (
-    <main className="min-h-screen container-margins section-py-lg">
+    <main id="main-content" className="min-h-screen container-margins section-py-lg">
       <div className="max-w-[1200px] mx-auto">
         {/* Header */}
         <motion.header
@@ -110,6 +117,17 @@ export default function AdminStatsPage() {
           </div>
         </motion.header>
 
+        {error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            role="alert"
+            className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
+          >
+            {error}
+          </motion.div>
+        )}
+
         {/* Team Summary */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -119,7 +137,7 @@ export default function AdminStatsPage() {
         >
           <Card hover={false}>
             <CardContent>
-              <div className="grid grid-cols-3 gap-6 text-center">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                 <div>
                   <p className="text-2xl font-heading tabular-nums">
                     {formatDuration(teamTotalSeconds)}
@@ -252,7 +270,7 @@ export default function AdminStatsPage() {
                       </div>
                     ) : (
                       <div className="pt-2 border-t border-white/10">
-                        <p className="text-white/40 text-sm">No entries</p>
+                        <p className="text-white/50 text-sm">No entries</p>
                       </div>
                     )}
                   </CardContent>

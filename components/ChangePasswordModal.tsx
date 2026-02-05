@@ -18,10 +18,11 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
   const [isLoading, setIsLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<Element | null>(null);
 
   // Focus trap and Escape key handling
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") {
+    if (e.key === "Escape" && !isLoading) {
       onClose();
       return;
     }
@@ -44,10 +45,11 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
         first.focus();
       }
     }
-  }, [onClose]);
+  }, [onClose, isLoading]);
 
   useEffect(() => {
     if (isOpen) {
+      triggerRef.current = document.activeElement;
       document.addEventListener("keydown", handleKeyDown);
       // Auto-focus first input after animation
       const timer = setTimeout(() => firstInputRef.current?.focus(), 100);
@@ -103,12 +105,17 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
   };
 
   const handleClose = () => {
+    if (isLoading) return;
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
     setError("");
     setSuccess(false);
     onClose();
+    // Restore focus to trigger element
+    requestAnimationFrame(() => {
+      (triggerRef.current as HTMLElement)?.focus?.();
+    });
   };
 
   return (

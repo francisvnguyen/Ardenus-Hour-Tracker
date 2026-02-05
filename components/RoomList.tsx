@@ -37,13 +37,19 @@ export function RoomList({
   const [editMeetLink, setEditMeetLink] = useState("");
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAdd = async () => {
-    if (newName.trim()) {
-      await onCreate(newName.trim(), newMeetLink.trim());
-      setNewName("");
-      setNewMeetLink("");
-      setIsAdding(false);
+    if (newName.trim() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onCreate(newName.trim(), newMeetLink.trim());
+        setNewName("");
+        setNewMeetLink("");
+        setIsAdding(false);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -56,11 +62,16 @@ export function RoomList({
   };
 
   const handleSaveEdit = async () => {
-    if (editingId && editName.trim()) {
-      await onEdit(editingId, editName.trim(), editMeetLink.trim());
-      setEditingId(null);
-      setEditName("");
-      setEditMeetLink("");
+    if (editingId && editName.trim() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onEdit(editingId, editName.trim(), editMeetLink.trim());
+        setEditingId(null);
+        setEditName("");
+        setEditMeetLink("");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -72,15 +83,20 @@ export function RoomList({
   };
 
   const handleConfirmDelete = async () => {
-    if (deletingId) {
+    if (deletingId && !isSubmitting) {
       if (deleteConfirmation !== "delete this room") {
         setError('Please type "delete this room" to confirm');
         return;
       }
-      await onDelete(deletingId, deleteConfirmation);
-      setDeletingId(null);
-      setDeleteConfirmation("");
-      setError("");
+      setIsSubmitting(true);
+      try {
+        await onDelete(deletingId, deleteConfirmation);
+        setDeletingId(null);
+        setDeleteConfirmation("");
+        setError("");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -128,7 +144,7 @@ export function RoomList({
                 onChange={(e) => setNewMeetLink(e.target.value)}
               />
               <div className="flex gap-2">
-                <Button onClick={handleAdd} variant="primary" size="sm">
+                <Button onClick={handleAdd} variant="primary" size="sm" isLoading={isSubmitting}>
                   Save
                 </Button>
                 <Button
@@ -185,6 +201,7 @@ export function RoomList({
                             onClick={handleSaveEdit}
                             variant="primary"
                             size="sm"
+                            isLoading={isSubmitting}
                           >
                             Save
                           </Button>
@@ -218,13 +235,14 @@ export function RoomList({
                           autoFocus
                         />
                         {error && (
-                          <p className="text-red-400 text-sm">{error}</p>
+                          <p className="text-red-400 text-sm" role="alert">{error}</p>
                         )}
                         <div className="flex gap-2">
                           <Button
                             onClick={handleConfirmDelete}
                             variant="primary"
                             size="sm"
+                            isLoading={isSubmitting}
                             className="bg-red-600 border-red-600 hover:bg-transparent hover:text-red-400"
                           >
                             Delete
@@ -253,6 +271,7 @@ export function RoomList({
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
+                                role="img"
                                 aria-label="Has Meet link"
                               >
                                 <path

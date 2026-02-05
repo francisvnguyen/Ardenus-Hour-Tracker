@@ -43,7 +43,13 @@ export default function AdminUsersPage() {
   const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
   const [resetPasswordValue, setResetPasswordValue] = useState("");
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    if (session && session.user?.role !== "admin") {
+      router.push("/");
+    }
+  }, [session, router]);
+
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/users");
       if (res.ok) {
@@ -53,7 +59,7 @@ export default function AdminUsersPage() {
     } catch {
       setError("Failed to load users");
     }
-  };
+  }, []);
 
   const fetchTags = useCallback(async () => {
     try {
@@ -71,7 +77,7 @@ export default function AdminUsersPage() {
     Promise.all([fetchUsers(), fetchTags()]).finally(() => {
       setIsLoading(false);
     });
-  }, [fetchTags]);
+  }, [fetchUsers, fetchTags]);
 
   const handleAddTag = async (tag: Omit<Tag, "id">) => {
     setError("");
@@ -270,7 +276,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <main className="min-h-screen container-margins section-py-lg">
+    <main id="main-content" className="min-h-screen container-margins section-py-lg">
       <div className="max-w-[1000px] mx-auto">
         {/* Header */}
         <motion.header

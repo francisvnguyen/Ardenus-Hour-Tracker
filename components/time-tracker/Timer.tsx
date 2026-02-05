@@ -200,7 +200,7 @@ export function Timer({ categories, tags, onTimeEntryComplete }: TimerProps) {
               id="timer-category"
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              disabled={isRunning}
+              disabled={isRunning || elapsedSeconds > 0}
             >
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id} className="bg-black">
@@ -216,7 +216,7 @@ export function Timer({ categories, tags, onTimeEntryComplete }: TimerProps) {
               id="timer-tag"
               value={selectedTagId}
               onChange={(e) => setSelectedTagId(e.target.value)}
-              disabled={isRunning}
+              disabled={isRunning || elapsedSeconds > 0}
             >
               <option value="" className="bg-black">No tag</option>
               {tags.map((tag) => (
@@ -234,7 +234,7 @@ export function Timer({ categories, tags, onTimeEntryComplete }: TimerProps) {
               placeholder="What are you working on?"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={isRunning}
+              disabled={isRunning || elapsedSeconds > 0}
             />
           </div>
         </div>

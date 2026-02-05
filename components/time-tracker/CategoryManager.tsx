@@ -65,11 +65,12 @@ export function CategoryManager({
       <CardContent className="space-y-4">
         <AnimatePresence mode="popLayout">
           {isAdding && (
-            <motion.div
+            <motion.form
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="space-y-4 pb-4 border-b border-white/10"
+              onSubmit={(e) => { e.preventDefault(); handleAdd(); }}
             >
               <Input
                 placeholder="Category name"
@@ -87,7 +88,7 @@ export function CategoryManager({
                     onClick={() => setSelectedColor(color)}
                     aria-label={`Select color ${color}`}
                     aria-pressed={selectedColor === color}
-                    className={`w-8 h-8 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                    className={`w-11 h-11 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                       selectedColor === color
                         ? "ring-2 ring-white ring-offset-2 ring-offset-black"
                         : ""
@@ -97,10 +98,11 @@ export function CategoryManager({
                 ))}
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleAdd} variant="primary" size="sm">
+                <Button type="submit" variant="primary" size="sm">
                   Save
                 </Button>
                 <Button
+                  type="button"
                   onClick={() => {
                     setIsAdding(false);
                     setNewName("");
@@ -111,7 +113,7 @@ export function CategoryManager({
                   Cancel
                 </Button>
               </div>
-            </motion.div>
+            </motion.form>
           )}
         </AnimatePresence>
 

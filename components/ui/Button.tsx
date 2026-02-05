@@ -40,7 +40,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizes: Record<ButtonSize, string> = {
-      sm: "px-4 py-2 text-xs",
+      sm: "px-4 py-2 text-xs min-h-[44px]",
       md: "px-6 py-3 text-xs",
       lg: "px-8 py-4 text-sm",
     };
