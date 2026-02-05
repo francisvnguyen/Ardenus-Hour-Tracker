@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui";
@@ -49,8 +50,15 @@ export default function LoginPage() {
           transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
+          <Image
+            src="/assets/ArdenusIcon3.png"
+            alt="Ardenus logo"
+            width={64}
+            height={64}
+            className="mx-auto mb-4"
+          />
           <p className="text-eyebrow mb-2">Ardenus</p>
-          <h1 className="text-display-3 font-heading">Time Tracker</h1>
+          <h1 className="text-display-3 font-heading">Nexus</h1>
         </motion.div>
 
         <motion.div
