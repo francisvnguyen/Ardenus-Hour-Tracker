@@ -23,6 +23,16 @@ export const metadata: Metadata = {
   description: "Ardenus team time tracking and management",
   icons: {
     icon: "/assets/favicon.png",
+    apple: "/assets/ArdenusIcon3.png",
+  },
+  metadataBase: new URL("https://nexus.ardenus.com"),
+  openGraph: {
+    title: "Ardenus Nexus",
+    description: "Ardenus team time tracking and management",
+    url: "https://nexus.ardenus.com",
+    siteName: "Ardenus Nexus",
+    locale: "en_US",
+    type: "website",
   },
 };
 
