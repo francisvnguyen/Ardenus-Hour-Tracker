@@ -1,8 +1,6 @@
 services:
   tracker:
     build: .
-    ports:
-      - "3000:3000"
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
       - DATABASE_PATH=/app/data/tracker.db
@@ -10,5 +8,23 @@ services:
       - tracker-data:/app/data
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - tracker
+    restart: unless-stopped
+
 volumes:
   tracker-data:
+  caddy_data:
+  caddy_config:
