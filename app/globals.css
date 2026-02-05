@@ -33,6 +33,7 @@
 
   html {
     scroll-behavior: smooth;
+    color-scheme: dark;
   }
 
   body {
@@ -93,7 +94,7 @@
 
   /* Special Text Styles */
   .text-eyebrow {
-    @apply text-xs uppercase tracking-[0.1em] text-white/50;
+    @apply text-xs uppercase tracking-[0.1em] text-white/70;
   }
 
   .uppercase-wide {
@@ -187,22 +188,22 @@
   /* Input Fields */
   .input {
     @apply w-full bg-transparent border-b border-white/10
-           py-3 text-white placeholder:text-[#4f4f4f]
+           py-3 text-white placeholder:text-[#767676]
            transition-colors duration-300 outline-none;
   }
 
-  .input:focus {
-    @apply border-white/50;
+  .input:focus-visible {
+    @apply border-white/50 ring-1 ring-white/40;
   }
 
   .input-bordered {
     @apply w-full bg-transparent border border-white/10 rounded-lg
-           px-4 py-3 text-white placeholder:text-[#4f4f4f]
+           px-4 py-3 text-white placeholder:text-[#767676]
            transition-colors duration-300 outline-none;
   }
 
-  .input-bordered:focus {
-    @apply border-white/30;
+  .input-bordered:focus-visible {
+    @apply border-white/50 ring-1 ring-white/40;
   }
 
   /* Date Input Calendar Icon */
@@ -227,8 +228,8 @@
     background-position: right 0 center;
   }
 
-  .select:focus {
-    @apply border-white/50;
+  .select:focus-visible {
+    @apply border-white/50 ring-1 ring-white/40;
   }
 
   /* Timer Display */

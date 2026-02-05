@@ -193,20 +193,23 @@ export default function Home() {
     })) as TimeEntry[];
   }, [entries, filters]);
 
-  if (status === "loading" || !isLoaded) {
+  if (status === "loading" || (status === "authenticated" && !isLoaded)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        />
+        <div role="status">
+          <motion.div
+            className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen container-margins section-py-lg">
+    <main id="main-content" className="min-h-screen container-margins section-py-lg">
       <div className="max-w-[1400px] mx-auto">
         {/* Header with user info */}
         <Header />
@@ -216,15 +219,18 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
+            role="alert"
+            className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 flex items-center justify-between"
           >
-            {error}
+            <span>{error}</span>
             <button
               onClick={() => setError(null)}
               aria-label="Dismiss error"
-              className="ml-4 text-white/50 hover:text-white"
+              className="ml-4 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center text-white/60 hover:text-white transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              <span aria-hidden="true">x</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </motion.div>
         )}
@@ -306,7 +312,7 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <p className="text-white/30 text-sm">
+          <p className="text-white/50 text-sm">
             Ardenus Time Tracker
           </p>
         </motion.footer>

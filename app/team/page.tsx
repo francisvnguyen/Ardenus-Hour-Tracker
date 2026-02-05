@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button, Card, CardHeader, CardContent } from "@/components/ui";
 import { formatTime, formatDuration, formatDate, formatTimeOfDay } from "@/lib/utils";
@@ -12,6 +12,8 @@ import {
   filterEntries,
   defaultFilters,
 } from "@/components/time-tracker/TimeEntryFilters";
+import { RoomList } from "@/components/RoomList";
+import type { Room } from "@/types";
 
 interface ActiveTimer {
   id: string;
@@ -58,11 +60,13 @@ interface User {
 }
 
 export default function TeamPage() {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const [entries, setEntries] = useState<TeamEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
@@ -114,6 +118,88 @@ export default function TeamPage() {
     }
   }, []);
 
+  const fetchRooms = useCallback(async () => {
+    try {
+      const res = await fetch("/api/rooms");
+      if (res.ok) {
+        const data = await res.json();
+        setRooms(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch rooms:", error);
+    }
+  }, []);
+
+  const handleJoinRoom = useCallback(async (roomId: string): Promise<string | null> => {
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/join`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        await fetchRooms();
+        return data.meetLink || null;
+      }
+    } catch (error) {
+      console.error("Failed to join room:", error);
+    }
+    return null;
+  }, [fetchRooms]);
+
+  const handleLeaveRoom = useCallback(async (roomId: string) => {
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/leave`, { method: "POST" });
+      if (res.ok) {
+        await fetchRooms();
+      }
+    } catch (error) {
+      console.error("Failed to leave room:", error);
+    }
+  }, [fetchRooms]);
+
+  const handleCreateRoom = useCallback(async (name: string, meetLink: string) => {
+    try {
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, meetLink: meetLink || undefined }),
+      });
+      if (res.ok) {
+        await fetchRooms();
+      }
+    } catch (error) {
+      console.error("Failed to create room:", error);
+    }
+  }, [fetchRooms]);
+
+  const handleEditRoom = useCallback(async (id: string, name: string, meetLink: string) => {
+    try {
+      const res = await fetch(`/api/rooms/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, meetLink: meetLink || undefined }),
+      });
+      if (res.ok) {
+        await fetchRooms();
+      }
+    } catch (error) {
+      console.error("Failed to edit room:", error);
+    }
+  }, [fetchRooms]);
+
+  const handleDeleteRoom = useCallback(async (id: string, confirmation: string) => {
+    try {
+      const res = await fetch(`/api/rooms/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation }),
+      });
+      if (res.ok) {
+        await fetchRooms();
+      }
+    } catch (error) {
+      console.error("Failed to delete room:", error);
+    }
+  }, [fetchRooms]);
+
   useEffect(() => {
     if (status === "authenticated") {
       Promise.all([
@@ -121,18 +207,24 @@ export default function TeamPage() {
         fetchEntries(),
         fetchCategories(),
         fetchUsers(),
+        fetchRooms(),
       ]).then(() => {
         setIsLoading(false);
       });
 
-      // Refresh active timers every 30 seconds
-      const interval = setInterval(fetchActiveTimers, 30000);
+      // Refresh active timers and rooms every 30 seconds
+      const interval = setInterval(() => {
+        fetchActiveTimers();
+        fetchRooms();
+      }, 30000);
       return () => clearInterval(interval);
     }
-  }, [status, fetchActiveTimers, fetchEntries, fetchCategories, fetchUsers]);
+  }, [status, fetchActiveTimers, fetchEntries, fetchCategories, fetchUsers, fetchRooms]);
 
   // Update elapsed time locally every second for active timers
   useEffect(() => {
+    if (activeTimers.length === 0) return;
+
     const interval = setInterval(() => {
       setActiveTimers((prev) =>
         prev.map((timer) => ({
@@ -143,7 +235,7 @@ export default function TeamPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTimers.length]);
 
   // Filter entries based on current filters
   const filteredEntries = useMemo(() => {
@@ -168,11 +260,14 @@ export default function TeamPage() {
   if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        />
+        <div role="status">
+          <motion.div
+            className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -191,11 +286,9 @@ export default function TeamPage() {
             <p className="text-eyebrow mb-2">Team</p>
             <h1 className="text-display-3 font-heading">Activity Dashboard</h1>
           </div>
-          <Link href="/">
-            <Button variant="secondary" size="sm">
-              Back to Tracker
-            </Button>
-          </Link>
+          <Button variant="secondary" size="sm" onClick={() => router.push("/")}>
+            Back to Tracker
+          </Button>
         </motion.header>
 
         {/* Who's Clocked In */}
@@ -246,7 +339,7 @@ export default function TeamPage() {
                             {timer.categoryName}
                           </p>
                           {timer.description && (
-                            <p className="text-white/30 text-sm truncate mt-1">
+                            <p className="text-white/50 text-sm truncate mt-1">
                               {timer.description}
                             </p>
                           )}
@@ -265,11 +358,30 @@ export default function TeamPage() {
           </Card>
         </motion.div>
 
-        {/* Filters */}
+        {/* Rooms */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
+          className="mb-8"
+        >
+          <RoomList
+            rooms={rooms}
+            currentUserId={session?.user?.id || ""}
+            isAdmin={session?.user?.role === "admin"}
+            onJoin={handleJoinRoom}
+            onLeave={handleLeaveRoom}
+            onCreate={handleCreateRoom}
+            onEdit={handleEditRoom}
+            onDelete={handleDeleteRoom}
+          />
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
         >
           <TimeEntryFilters
             filters={filters}
@@ -284,7 +396,7 @@ export default function TeamPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.25 }}
         >
           <Card hover={false}>
             <CardHeader>
@@ -311,7 +423,7 @@ export default function TeamPage() {
                   <div key={date}>
                     <div className="px-6 py-3 bg-white/5 border-b border-white/10">
                       <span className="text-eyebrow">{date}</span>
-                      <span className="text-white/30 ml-4 text-sm">
+                      <span className="text-white/50 ml-4 text-sm">
                         {formatDuration(
                           dateEntries.reduce((sum, e) => sum + e.duration, 0)
                         )}
@@ -345,7 +457,7 @@ export default function TeamPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-white/40 text-sm">
+                          <p className="text-white/60 text-sm">
                             {entry.categoryName} •{" "}
                             {formatTimeOfDay(new Date(entry.startTime))}
                             {entry.endTime &&
@@ -373,9 +485,9 @@ export default function TeamPage() {
           className="mt-16 pt-8 border-t border-white/10 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.35 }}
         >
-          <p className="text-white/30 text-sm">Ardenus Time Tracker - Team View</p>
+          <p className="text-white/50 text-sm">Ardenus Time Tracker - Team View</p>
         </motion.footer>
       </div>
     </main>

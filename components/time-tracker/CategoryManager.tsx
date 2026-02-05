@@ -30,6 +30,7 @@ export function CategoryManager({
   isAdmin = false,
 }: CategoryManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
 
@@ -44,6 +45,11 @@ export function CategoryManager({
       setSelectedColor(PRESET_COLORS[0]);
       setIsAdding(false);
     }
+  };
+
+  const handleConfirmDelete = (id: string) => {
+    onDeleteCategory(id);
+    setDeletingId(null);
   };
 
   return (
@@ -67,6 +73,7 @@ export function CategoryManager({
             >
               <Input
                 placeholder="Category name"
+                aria-label="Category name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 autoFocus
@@ -80,7 +87,7 @@ export function CategoryManager({
                     onClick={() => setSelectedColor(color)}
                     aria-label={`Select color ${color}`}
                     aria-pressed={selectedColor === color}
-                    className={`w-8 h-8 rounded-full transition-all ${
+                    className={`w-8 h-8 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                       selectedColor === color
                         ? "ring-2 ring-white ring-offset-2 ring-offset-black"
                         : ""
@@ -116,36 +123,61 @@ export function CategoryManager({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="flex items-center gap-3 py-2 group"
+                className="py-2 group"
               >
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: category.color }}
-                />
-                <span className="flex-1">{category.name}</span>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteCategory(category.id)}
-                    aria-label={`Delete category ${category.name}`}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </Button>
+                {deletingId === category.id ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-white/70 text-sm">Delete {category.name}?</p>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleConfirmDelete(category.id)}
+                        variant="primary"
+                        size="sm"
+                        className="bg-red-600 border-red-600 hover:bg-transparent hover:text-red-400"
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        onClick={() => setDeletingId(null)}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <span className="flex-1">{category.name}</span>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeletingId(category.id)}
+                        aria-label={`Delete category ${category.name}`}
+                        className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </Button>
+                    )}
+                  </div>
                 )}
               </motion.div>
             ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -72,7 +72,7 @@ export function TimeEntryFilters({
       <div className="flex gap-3">
         <div className="flex-1 relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -125,76 +125,82 @@ export function TimeEntryFilters({
       </div>
 
       {/* Expanded filters */}
-      {isExpanded && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 p-4 bg-white/5 rounded-lg border border-white/10"
-        >
-          {/* Date Range - Start */}
-          <div>
-            <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
-              From Date
-            </label>
-            <Input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => updateFilter("startDate", e.target.value)}
-            />
-          </div>
-
-          {/* Date Range - End */}
-          <div>
-            <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
-              To Date
-            </label>
-            <Input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => updateFilter("endDate", e.target.value)}
-            />
-          </div>
-
-          {/* Category Filter */}
-          <div>
-            <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
-              Category
-            </label>
-            <Select
-              value={filters.categoryId}
-              onChange={(e) => updateFilter("categoryId", e.target.value)}
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id} className="bg-black">
-                  {cat.name}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          {/* User Filter - Only for team view */}
-          {showUserFilter && (
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 p-4 bg-white/5 rounded-lg border border-white/10"
+          >
+            {/* Date Range - Start */}
             <div>
-              <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
-                Team Member
+              <label htmlFor="filter-start-date" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
+                From Date
+              </label>
+              <Input
+                id="filter-start-date"
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => updateFilter("startDate", e.target.value)}
+              />
+            </div>
+
+            {/* Date Range - End */}
+            <div>
+              <label htmlFor="filter-end-date" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
+                To Date
+              </label>
+              <Input
+                id="filter-end-date"
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => updateFilter("endDate", e.target.value)}
+              />
+            </div>
+
+            {/* Category Filter */}
+            <div>
+              <label htmlFor="filter-category" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
+                Category
               </label>
               <Select
-                value={filters.userId}
-                onChange={(e) => updateFilter("userId", e.target.value)}
+                id="filter-category"
+                value={filters.categoryId}
+                onChange={(e) => updateFilter("categoryId", e.target.value)}
               >
-                <option value="">All Members</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id} className="bg-black">
-                    {user.name}
+                <option value="">All Categories</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id} className="bg-black">
+                    {cat.name}
                   </option>
                 ))}
               </Select>
             </div>
-          )}
-        </motion.div>
-      )}
+
+            {/* User Filter - Only for team view */}
+            {showUserFilter && (
+              <div>
+                <label htmlFor="filter-user" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
+                  Team Member
+                </label>
+                <Select
+                  id="filter-user"
+                  value={filters.userId}
+                  onChange={(e) => updateFilter("userId", e.target.value)}
+                >
+                  <option value="">All Members</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id} className="bg-black">
+                      {user.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button, Input, Card, CardHeader, CardContent } from "@/components/ui";
 import { TagManager } from "@/components/TagManager";
@@ -18,6 +18,7 @@ interface User {
 
 export default function AdminUsersPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +37,11 @@ export default function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Inline confirmation/form state
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
 
   const fetchUsers = async () => {
     try {
@@ -164,12 +170,13 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
-
     try {
       const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
       if (res.ok) {
+        setDeletingUserId(null);
         fetchUsers();
+        setSuccess("User deleted successfully");
+        setTimeout(() => setSuccess(""), 3000);
       } else {
         const data = await res.json();
         setError(data.error || "Failed to delete user");
@@ -180,17 +187,21 @@ export default function AdminUsersPage() {
   };
 
   const handleResetPassword = async (id: string) => {
-    const newPassword = prompt("Enter new password for this user:");
-    if (!newPassword) return;
+    if (!resetPasswordValue || resetPasswordValue.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
     try {
       const res = await fetch(`/api/users/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: newPassword }),
+        body: JSON.stringify({ password: resetPasswordValue }),
       });
 
       if (res.ok) {
+        setResetPasswordUserId(null);
+        setResetPasswordValue("");
         setSuccess("Password updated successfully");
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -246,11 +257,14 @@ export default function AdminUsersPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        />
+        <div role="status">
+          <motion.div
+            className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -269,17 +283,16 @@ export default function AdminUsersPage() {
             <p className="text-eyebrow mb-2">Admin</p>
             <h1 className="text-display-3 font-heading">User Management</h1>
           </div>
-          <Link href="/">
-            <Button variant="secondary" size="sm">
-              Back to Tracker
-            </Button>
-          </Link>
+          <Button variant="secondary" size="sm" onClick={() => router.push("/")}>
+            Back to Tracker
+          </Button>
         </motion.header>
 
         {error && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            role="alert"
             className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
           >
             {error}
@@ -290,6 +303,7 @@ export default function AdminUsersPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            role="status"
             className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400"
           >
             {success}
@@ -312,39 +326,118 @@ export default function AdminUsersPage() {
                   {users.map((user) => (
                     <div
                       key={user.id}
-                      className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+                      className="p-4 hover:bg-white/5 transition-colors"
                     >
-                      <div>
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-sm text-white/50">{user.email}</p>
-                        <span
-                          className={`text-xs uppercase tracking-wider ${
-                            user.role === "admin"
-                              ? "text-yellow-400"
-                              : "text-white/30"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                      </div>
-                      {user.id !== session?.user.id && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleResetPassword(user.id)}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-white/60">{user.email}</p>
+                          <span
+                            className={`text-xs uppercase tracking-wider ${
+                              user.role === "admin"
+                                ? "text-yellow-400"
+                                : "text-white/50"
+                            }`}
                           >
-                            Reset PW
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            Delete
-                          </Button>
+                            {user.role}
+                          </span>
                         </div>
+                        {user.id !== session?.user.id && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setResetPasswordUserId(user.id);
+                                setResetPasswordValue("");
+                                setDeletingUserId(null);
+                              }}
+                            >
+                              Reset PW
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setDeletingUserId(user.id);
+                                setResetPasswordUserId(null);
+                              }}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Inline delete confirmation */}
+                      {deletingUserId === user.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="mt-3 flex items-center justify-between gap-3 pt-3 border-t border-white/10"
+                        >
+                          <p className="text-white/70 text-sm">
+                            Delete <span className="text-white">{user.name}</span>? This cannot be undone.
+                          </p>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <Button
+                              onClick={() => handleDeleteUser(user.id)}
+                              variant="primary"
+                              size="sm"
+                              className="bg-red-600 border-red-600 hover:bg-transparent hover:text-red-400"
+                            >
+                              Delete
+                            </Button>
+                            <Button
+                              onClick={() => setDeletingUserId(null)}
+                              variant="ghost"
+                              size="sm"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Inline reset password form */}
+                      {resetPasswordUserId === user.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="mt-3 pt-3 border-t border-white/10 space-y-3"
+                        >
+                          <label htmlFor={`reset-pw-${user.id}`} className="block text-sm text-white/70">
+                            New password for {user.name}
+                          </label>
+                          <div className="flex gap-2">
+                            <Input
+                              id={`reset-pw-${user.id}`}
+                              type="password"
+                              value={resetPasswordValue}
+                              onChange={(e) => setResetPasswordValue(e.target.value)}
+                              placeholder="New password (min 6 chars)"
+                              autoFocus
+                            />
+                            <Button
+                              onClick={() => handleResetPassword(user.id)}
+                              variant="primary"
+                              size="sm"
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setResetPasswordUserId(null);
+                                setResetPasswordValue("");
+                              }}
+                              variant="ghost"
+                              size="sm"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </motion.div>
                       )}
                     </div>
                   ))}
@@ -371,10 +464,11 @@ export default function AdminUsersPage() {
                 <CardContent>
                   <form onSubmit={handleCreateUser} className="space-y-4">
                     <div>
-                      <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
+                      <label htmlFor="create-user-name" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
                         Name
                       </label>
                       <Input
+                        id="create-user-name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="John Doe"
@@ -382,10 +476,11 @@ export default function AdminUsersPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
+                      <label htmlFor="create-user-email" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
                         Email
                       </label>
                       <Input
+                        id="create-user-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -394,10 +489,11 @@ export default function AdminUsersPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
+                      <label htmlFor="create-user-password" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
                         Password
                       </label>
                       <Input
+                        id="create-user-password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -406,7 +502,7 @@ export default function AdminUsersPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
+                      <label className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
                         Role
                       </label>
                       <div className="flex gap-4">
@@ -460,39 +556,45 @@ export default function AdminUsersPage() {
                 <CardContent>
                   <form onSubmit={handleChangeOwnPassword} className="space-y-4">
                     <div>
-                      <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
+                      <label htmlFor="admin-current-password" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
                         Current Password
                       </label>
                       <Input
+                        id="admin-current-password"
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         placeholder="••••••••"
                         required
+                        autoComplete="current-password"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
+                      <label htmlFor="admin-new-password" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
                         New Password
                       </label>
                       <Input
+                        id="admin-new-password"
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="••••••••"
                         required
+                        autoComplete="new-password"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-white/50 mb-2 uppercase tracking-wider">
+                      <label htmlFor="admin-confirm-password" className="block text-sm text-white/70 mb-2 uppercase tracking-wider">
                         Confirm New Password
                       </label>
                       <Input
+                        id="admin-confirm-password"
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••••"
                         required
+                        autoComplete="new-password"
                       />
                     </div>
                     <Button

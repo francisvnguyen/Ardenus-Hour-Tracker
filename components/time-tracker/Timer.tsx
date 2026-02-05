@@ -66,20 +66,20 @@ export function Timer({ categories, tags, onTimeEntryComplete }: TimerProps) {
     }
   }, [categories, selectedCategoryId, isRestoring]);
 
-  // Timer interval
+  // Timer interval - calculate from startTime to avoid drift
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (isRunning) {
+    if (isRunning && startTime) {
       interval = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
+        setElapsedSeconds(Math.floor((Date.now() - startTime.getTime()) / 1000));
       }, 1000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning]);
+  }, [isRunning, startTime]);
 
   // Sync active timer to database
   const syncActiveTimer = useCallback(async (action: 'start' | 'stop', categoryId?: string, tagId?: string, desc?: string, start?: Date) => {
@@ -104,6 +104,7 @@ export function Timer({ categories, tags, onTimeEntryComplete }: TimerProps) {
   }, []);
 
   const handleStart = useCallback(() => {
+    if (!selectedCategoryId) return;
     const now = new Date();
     setIsRunning(true);
     setStartTime(now);
@@ -116,8 +117,10 @@ export function Timer({ categories, tags, onTimeEntryComplete }: TimerProps) {
   }, []);
 
   const handleResume = useCallback(() => {
+    // Adjust startTime to account for paused duration so drift calculation stays correct
+    setStartTime(new Date(Date.now() - elapsedSeconds * 1000));
     setIsRunning(true);
-  }, []);
+  }, [elapsedSeconds]);
 
   const handleStop = useCallback(() => {
     if (elapsedSeconds > 0 && startTime) {
@@ -172,19 +175,21 @@ export function Timer({ categories, tags, onTimeEntryComplete }: TimerProps) {
           >
             {formatTime(elapsedSeconds)}
           </motion.div>
-          <AnimatePresence>
-            {isRunning && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="mt-2 flex items-center justify-center gap-2"
-              >
-                <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                <span className="text-eyebrow">Recording</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div aria-live="polite" aria-atomic="true">
+            <AnimatePresence>
+              {isRunning && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-2 flex items-center justify-center gap-2"
+                >
+                  <span className="h-2 w-2 rounded-full bg-white animate-pulse" aria-hidden="true" />
+                  <span className="text-eyebrow">Recording</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Category & Description */}

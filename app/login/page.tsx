@@ -66,7 +66,7 @@ export default function LoginPage() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm text-white/50 mb-2 uppercase tracking-wider"
+                    className="block text-sm text-white/70 mb-2 uppercase tracking-wider"
                   >
                     Email
                   </label>
@@ -84,7 +84,7 @@ export default function LoginPage() {
                 <div>
                   <label
                     htmlFor="password"
-                    className="block text-sm text-white/50 mb-2 uppercase tracking-wider"
+                    className="block text-sm text-white/70 mb-2 uppercase tracking-wider"
                   >
                     Password
                   </label>
@@ -104,6 +104,7 @@ export default function LoginPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-red-400 text-sm"
+                    role="alert"
                   >
                     {error}
                   </motion.p>
@@ -129,7 +130,7 @@ export default function LoginPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <p className="text-white/30 text-sm">
+          <p className="text-white/50 text-sm">
             Contact your administrator for access
           </p>
         </motion.footer>

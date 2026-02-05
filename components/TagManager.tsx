@@ -113,6 +113,7 @@ export function TagManager({
             >
               <Input
                 placeholder="Tag name"
+                aria-label="Tag name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 autoFocus
@@ -126,7 +127,7 @@ export function TagManager({
                     onClick={() => setSelectedColor(color)}
                     aria-label={`Select color ${color}`}
                     aria-pressed={selectedColor === color}
-                    className={`w-8 h-8 rounded-full transition-all ${
+                    className={`w-8 h-8 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                       selectedColor === color
                         ? "ring-2 ring-white ring-offset-2 ring-offset-black"
                         : ""
@@ -185,7 +186,7 @@ export function TagManager({
                             onClick={() => setEditColor(color)}
                             aria-label={`Select color ${color}`}
                             aria-pressed={editColor === color}
-                            className={`w-6 h-6 rounded-full transition-all ${
+                            className={`w-6 h-6 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                               editColor === color
                                 ? "ring-2 ring-white ring-offset-2 ring-offset-black"
                                 : ""
@@ -219,6 +220,7 @@ export function TagManager({
                           setError("");
                         }}
                         placeholder="delete this tag"
+                        aria-label="Type delete this tag to confirm"
                         autoFocus
                       />
                       {error && (
@@ -254,7 +256,7 @@ export function TagManager({
                       />
                       <span className="flex-1">{tag.name}</span>
                       {isAdmin && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="sm"

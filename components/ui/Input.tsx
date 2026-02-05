@@ -11,9 +11,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant = "bordered", type = "text", ...props }, ref) => {
     const variants = {
       underline:
-        "w-full bg-transparent border-b border-white/10 py-3 text-white placeholder:text-[#4f4f4f] transition-colors duration-300 outline-none focus:border-white/50",
+        "w-full bg-transparent border-b border-white/10 py-3 text-white placeholder:text-[#767676] transition-colors duration-300 outline-none focus-visible:border-white/50 focus-visible:ring-1 focus-visible:ring-white/40",
       bordered:
-        "w-full bg-transparent border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-[#4f4f4f] transition-colors duration-300 outline-none focus:border-white/30",
+        "w-full bg-transparent border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-[#767676] transition-colors duration-300 outline-none focus-visible:border-white/50 focus-visible:ring-1 focus-visible:ring-white/40",
     };
 
     return (

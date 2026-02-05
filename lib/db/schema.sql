@@ -63,6 +63,25 @@ CREATE TABLE IF NOT EXISTS active_timers (
   FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE SET NULL
 );
 
+-- Rooms table
+CREATE TABLE IF NOT EXISTS rooms (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  meet_link TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Room participants (who's currently in each room)
+CREATE TABLE IF NOT EXISTS room_participants (
+  id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(room_id, user_id)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_category_id ON time_entries(category_id);
@@ -70,6 +89,8 @@ CREATE INDEX IF NOT EXISTS idx_time_entries_tag_id ON time_entries(tag_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(session_token);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_active_timers_user_id ON active_timers(user_id);
+CREATE INDEX IF NOT EXISTS idx_room_participants_room_id ON room_participants(room_id);
+CREATE INDEX IF NOT EXISTS idx_room_participants_user_id ON room_participants(user_id);
 
 -- Insert default categories
 INSERT OR IGNORE INTO categories (id, name, color) VALUES
@@ -77,3 +98,8 @@ INSERT OR IGNORE INTO categories (id, name, color) VALUES
   ('2', 'Meetings', '#a0a0a0'),
   ('3', 'Research', '#737373'),
   ('4', 'Admin', '#525252');
+
+-- Insert default rooms
+INSERT OR IGNORE INTO rooms (id, name, meet_link) VALUES
+  ('room-1', 'Open Office', NULL),
+  ('room-2', 'Focus Room', NULL);

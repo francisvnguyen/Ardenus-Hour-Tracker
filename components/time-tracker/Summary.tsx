@@ -57,12 +57,19 @@ export function Summary({ entries, categories }: SummaryProps) {
                   <span className="text-sm font-heading tabular-nums">
                     {formatDuration(category.totalSeconds)}
                   </span>
-                  <span className="text-white/40 text-xs ml-2">
+                  <span className="text-white/60 text-xs ml-2">
                     ({percentage}%)
                   </span>
                 </div>
               </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-1 bg-white/10 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-valuenow={percentage}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`${category.name}: ${percentage}%`}
+              >
                 <motion.div
                   className="h-full rounded-full"
                   style={{ backgroundColor: category.color }}

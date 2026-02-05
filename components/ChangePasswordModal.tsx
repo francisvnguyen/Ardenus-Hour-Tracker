@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Input } from "@/components/ui";
 
@@ -16,6 +16,47 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus trap and Escape key handling
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      onClose();
+      return;
+    }
+    if (e.key !== "Tab" || !modalRef.current) return;
+
+    const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      // Auto-focus first input after animation
+      const timer = setTimeout(() => firstInputRef.current?.focus(), 100);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        clearTimeout(timer);
+      };
+    }
+  }, [isOpen, handleKeyDown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,12 +131,18 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="w-full max-w-md bg-black border border-white/10 rounded-lg p-6">
+            <div
+              ref={modalRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="change-password-title"
+              className="w-full max-w-md bg-black border border-white/10 rounded-lg p-6"
+            >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-heading-3 font-heading">Change Password</h2>
+                <h2 id="change-password-title" className="text-heading-3 font-heading">Change Password</h2>
                 <button
                   onClick={handleClose}
-                  className="text-white/50 hover:text-white transition-colors"
+                  className="text-white/50 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"
                   aria-label="Close modal"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,11 +169,12 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                   <div>
                     <label
                       htmlFor="current-password"
-                      className="block text-sm text-white/50 mb-2 uppercase tracking-wider"
+                      className="block text-sm text-white/70 mb-2 uppercase tracking-wider"
                     >
                       Current Password
                     </label>
                     <Input
+                      ref={firstInputRef}
                       id="current-password"
                       type="password"
                       value={currentPassword}
@@ -140,7 +188,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                   <div>
                     <label
                       htmlFor="new-password"
-                      className="block text-sm text-white/50 mb-2 uppercase tracking-wider"
+                      className="block text-sm text-white/70 mb-2 uppercase tracking-wider"
                     >
                       New Password
                     </label>
@@ -158,7 +206,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
                   <div>
                     <label
                       htmlFor="confirm-password"
-                      className="block text-sm text-white/50 mb-2 uppercase tracking-wider"
+                      className="block text-sm text-white/70 mb-2 uppercase tracking-wider"
                     >
                       Confirm New Password
                     </label>

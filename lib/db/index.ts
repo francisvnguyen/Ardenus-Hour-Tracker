@@ -42,6 +42,48 @@ const migrations = [
     run: () => {
       db.exec('ALTER TABLE active_timers ADD COLUMN tag_id TEXT REFERENCES tags(id) ON DELETE SET NULL');
     }
+  },
+  {
+    name: 'create_rooms_table',
+    check: () => {
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='rooms'").all();
+      return tables.length > 0;
+    },
+    run: () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS rooms (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          meet_link TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT OR IGNORE INTO rooms (id, name, meet_link) VALUES
+          ('room-1', 'Open Office', NULL),
+          ('room-2', 'Focus Room', NULL);
+      `);
+    }
+  },
+  {
+    name: 'create_room_participants_table',
+    check: () => {
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='room_participants'").all();
+      return tables.length > 0;
+    },
+    run: () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS room_participants (
+          id TEXT PRIMARY KEY,
+          room_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE(room_id, user_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_room_participants_room_id ON room_participants(room_id);
+        CREATE INDEX IF NOT EXISTS idx_room_participants_user_id ON room_participants(user_id);
+      `);
+    }
   }
 ];
 
@@ -108,6 +150,24 @@ export interface DbActiveTimer {
   description: string | null;
   start_time: string;
   created_at: string;
+}
+
+export interface DbRoom {
+  id: string;
+  name: string;
+  meet_link: string | null;
+  created_at: string;
+}
+
+export interface DbRoomParticipant {
+  id: string;
+  room_id: string;
+  user_id: string;
+  joined_at: string;
+}
+
+export interface DbRoomParticipantWithUser extends DbRoomParticipant {
+  user_name: string;
 }
 
 export interface DbActiveTimerWithUser extends DbActiveTimer {
@@ -227,6 +287,43 @@ export const activeTimerQueries = {
     'UPDATE active_timers SET category_id = ?, tag_id = ?, description = ? WHERE user_id = ?'
   ),
   deleteByUserId: db.prepare<[string]>('DELETE FROM active_timers WHERE user_id = ?'),
+};
+
+// Room queries
+export const roomQueries = {
+  findAll: db.prepare<[], DbRoom>('SELECT * FROM rooms ORDER BY created_at ASC'),
+  findById: db.prepare<[string], DbRoom>('SELECT * FROM rooms WHERE id = ?'),
+  create: db.prepare<[string, string, string | null]>(
+    'INSERT INTO rooms (id, name, meet_link) VALUES (?, ?, ?)'
+  ),
+  update: db.prepare<[string, string | null, string]>(
+    'UPDATE rooms SET name = ?, meet_link = ? WHERE id = ?'
+  ),
+  delete: db.prepare<[string]>('DELETE FROM rooms WHERE id = ?'),
+};
+
+// Room participant queries
+export const roomParticipantQueries = {
+  findByRoomId: db.prepare<[string], DbRoomParticipant>(
+    'SELECT * FROM room_participants WHERE room_id = ?'
+  ),
+  findAllWithUsers: db.prepare<[], DbRoomParticipantWithUser>(`
+    SELECT
+      rp.*,
+      u.name as user_name
+    FROM room_participants rp
+    JOIN users u ON rp.user_id = u.id
+    ORDER BY rp.joined_at ASC
+  `),
+  join: db.prepare<[string, string, string]>(
+    'INSERT OR IGNORE INTO room_participants (id, room_id, user_id) VALUES (?, ?, ?)'
+  ),
+  leave: db.prepare<[string, string]>(
+    'DELETE FROM room_participants WHERE room_id = ? AND user_id = ?'
+  ),
+  leaveAll: db.prepare<[string]>(
+    'DELETE FROM room_participants WHERE user_id = ?'
+  ),
 };
 
 // Team queries (all users' entries)

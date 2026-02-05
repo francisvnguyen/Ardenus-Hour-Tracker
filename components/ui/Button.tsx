@@ -28,7 +28,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center rounded-full border font-medium uppercase tracking-[0.1em] transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none";
+      "inline-flex items-center justify-center rounded-full border font-medium uppercase tracking-[0.1em] transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black";
 
     const variants: Record<ButtonVariant, string> = {
       primary:
@@ -50,8 +50,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         disabled={disabled || isLoading}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={disabled || isLoading ? undefined : { scale: 1.02 }}
+        whileTap={disabled || isLoading ? undefined : { scale: 0.98 }}
         {...props}
       >
         {isLoading ? (
@@ -60,6 +60,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               className="h-4 w-4 animate-spin"
               viewBox="0 0 24 24"
               fill="none"
+              aria-hidden="true"
             >
               <circle
                 className="opacity-25"

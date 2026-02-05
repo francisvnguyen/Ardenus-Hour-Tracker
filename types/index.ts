@@ -37,6 +37,19 @@ export interface TimerState {
   elapsedSeconds: number;
 }
 
+export interface Room {
+  id: string;
+  name: string;
+  meetLink: string | null;
+  participants: RoomParticipant[];
+}
+
+export interface RoomParticipant {
+  userId: string;
+  userName: string;
+  joinedAt: string;
+}
+
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: "1", name: "Development", color: "#ffffff" },
   { id: "2", name: "Meetings", color: "#a0a0a0" },
